@@ -7,7 +7,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from core.api.exceptions import BadRequestError, ConflictError, NotFoundError
+from core.api.exceptions import BadRequestError, ConflictError, NotFoundError, PermissionDeniedError
 from modules.elm.domain.constants import (
     ApplicationStatus,
     LeaveCategory,
@@ -119,6 +119,14 @@ def review_resumption(
         )
 
     app = resumption.leave_application
+    if (
+        app.sanctioning_authority_user_id
+        and app.sanctioning_authority_user_id != reviewer_user_id
+    ):
+        raise PermissionDeniedError(
+            "Only the assigned Sanctioning Authority may review this resumption."
+        )
+
     return_type, new_status = determine_resumption_outcome(
         resumption.approved_end_date, resumption.actual_resumption_date
     )

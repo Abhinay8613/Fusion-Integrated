@@ -7,7 +7,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
-from core.api.exceptions import BadRequestError, ConflictError, NotFoundError
+from core.api.exceptions import BadRequestError, ConflictError, NotFoundError, PermissionDeniedError
 from modules.directory import contracts as directory
 from modules.elm.domain.constants import (
     ApplicationStatus,
@@ -181,6 +181,8 @@ def review_extension_unit_head(
 
     current_status = ExtensionStatus(ext.status)
     app = ext.leave_application
+    if app.unit_head_user_id and app.unit_head_user_id != reviewer_user_id:
+        raise PermissionDeniedError("Only the assigned Unit Head may review this extension.")
     requires_estt = bool(app.establishment_user_id)
 
     try:
@@ -245,6 +247,15 @@ def review_extension_final(
     ext = LeaveExtension.objects.select_related("leave_application").filter(id=extension_id).first()
     if not ext:
         raise NotFoundError(f"Extension #{extension_id} not found.")
+
+    app = ext.leave_application
+    if (
+        app.sanctioning_authority_user_id
+        and app.sanctioning_authority_user_id != sanctioner_user_id
+    ):
+        raise PermissionDeniedError(
+            "Only the assigned Sanctioning Authority may review this extension."
+        )
 
     current_status = ExtensionStatus(ext.status)
     try:

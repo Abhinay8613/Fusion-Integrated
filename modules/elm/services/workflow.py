@@ -133,7 +133,9 @@ def route_establishment(
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
     if app.establishment_user_id and app.establishment_user_id != establishment_user_id:
-        raise PermissionDeniedError("Only the assigned Establishment reviewer may forward this application.")
+        raise PermissionDeniedError(
+            "Only the assigned Establishment reviewer may forward this application."
+        )
 
     current_status = ApplicationStatus(app.status)
     try:
@@ -194,8 +196,13 @@ def sanction_decision(
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
-    if app.sanctioning_authority_user_id and app.sanctioning_authority_user_id != sanctioner_user_id:
-        raise PermissionDeniedError("Only the assigned Sanctioning Authority may make this decision.")
+    if (
+        app.sanctioning_authority_user_id
+        and app.sanctioning_authority_user_id != sanctioner_user_id
+    ):
+        raise PermissionDeniedError(
+            "Only the assigned Sanctioning Authority may make this decision."
+        )
 
     current_status = ApplicationStatus(app.status)
     try:

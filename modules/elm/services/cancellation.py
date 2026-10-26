@@ -182,7 +182,9 @@ def review_cancellation_establishment(
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
     if app.establishment_user_id and app.establishment_user_id != establishment_user_id:
-        raise PermissionDeniedError("Only the assigned Establishment reviewer may forward this cancellation.")
+        raise PermissionDeniedError(
+            "Only the assigned Establishment reviewer may forward this cancellation."
+        )
 
     current_status = ApplicationStatus(app.status)
     try:
@@ -233,8 +235,13 @@ def review_cancellation_final(
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
-    if app.sanctioning_authority_user_id and app.sanctioning_authority_user_id != sanctioner_user_id:
-        raise PermissionDeniedError("Only the assigned Sanctioning Authority may review this cancellation.")
+    if (
+        app.sanctioning_authority_user_id
+        and app.sanctioning_authority_user_id != sanctioner_user_id
+    ):
+        raise PermissionDeniedError(
+            "Only the assigned Sanctioning Authority may review this cancellation."
+        )
 
     current_status = ApplicationStatus(app.status)
     try:

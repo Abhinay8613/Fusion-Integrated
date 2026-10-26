@@ -1,6 +1,5 @@
 """Pure Python domain tests for workflow state transitions and state machines."""
 from datetime import date
-from decimal import Decimal
 
 import pytest
 
