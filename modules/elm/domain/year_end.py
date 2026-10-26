@@ -22,7 +22,9 @@ from modules.elm.domain.constants import LeaveCategory
 class YearEndAccountInput:
     category: str
     balance: Decimal
-    is_faculty: bool
+    is_faculty: bool = False
+    user_id: int | None = None
+    user_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,14 @@ class YearEndOutcome:
     carried_forward_amount: Decimal
     converted_to_el_amount: Decimal  # VL converted to EL
 
+    @property
+    def carry_forward_amount(self) -> Decimal:
+        return self.carried_forward_amount
+
+    @property
+    def converted_to_el(self) -> Decimal:
+        return self.converted_to_el_amount
+
 
 def calculate_year_end_outcome(account: YearEndAccountInput) -> YearEndOutcome:
     """Calculate the year-end disposition of a single leave account.
@@ -39,15 +49,15 @@ def calculate_year_end_outcome(account: YearEndAccountInput) -> YearEndOutcome:
     Returns YearEndOutcome with exact amounts for lapse, carry-forward, and conversion.
     """
     cat = LeaveCategory(account.category)
-    bal = max(Decimal("0"), account.balance)
+    bal = max(Decimal("0.00"), account.balance)
 
     if cat in (LeaveCategory.CL, LeaveCategory.RH, LeaveCategory.SCL):
         # BR-EL-002, 003, 004: CL, RH, SCL lapse completely at year end
         return YearEndOutcome(
             category=cat.value,
             lapsed_amount=bal,
-            carried_forward_amount=Decimal("0"),
-            converted_to_el_amount=Decimal("0"),
+            carried_forward_amount=Decimal("0.00"),
+            converted_to_el_amount=Decimal("0.00"),
         )
 
     if cat == LeaveCategory.VL:
@@ -57,7 +67,7 @@ def calculate_year_end_outcome(account: YearEndAccountInput) -> YearEndOutcome:
         return YearEndOutcome(
             category=cat.value,
             lapsed_amount=bal,  # VL itself lapses from the VL account
-            carried_forward_amount=Decimal("0"),
+            carried_forward_amount=Decimal("0.00"),
             converted_to_el_amount=converted_el,
         )
 
@@ -65,14 +75,14 @@ def calculate_year_end_outcome(account: YearEndAccountInput) -> YearEndOutcome:
         # BR-EL-005, 009: EL and COL carry forward
         return YearEndOutcome(
             category=cat.value,
-            lapsed_amount=Decimal("0"),
+            lapsed_amount=Decimal("0.00"),
             carried_forward_amount=bal,
-            converted_to_el_amount=Decimal("0"),
+            converted_to_el_amount=Decimal("0.00"),
         )
 
     return YearEndOutcome(
         category=account.category,
-        lapsed_amount=Decimal("0"),
+        lapsed_amount=Decimal("0.00"),
         carried_forward_amount=bal,
-        converted_to_el_amount=Decimal("0"),
+        converted_to_el_amount=Decimal("0.00"),
     )

@@ -64,6 +64,20 @@ class SubstituteStatus(StrEnum):
 
 
 class RecommendationOutcome(StrEnum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    RECOMMENDED = "recommended"
+    NOT_RECOMMENDED = "not_recommended"
+
+
+class CancellationOutcome(StrEnum):
+    APPROVE = "approve"
+    REJECT = "reject"
+    RECOMMENDED = "recommended"
+    NOT_RECOMMENDED = "not_recommended"
+
+
+class ExtensionOutcome(StrEnum):
     RECOMMENDED = "recommended"
     NOT_RECOMMENDED = "not_recommended"
 

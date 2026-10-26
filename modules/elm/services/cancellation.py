@@ -6,7 +6,7 @@ from datetime import date
 from django.db import transaction
 from django.utils import timezone
 
-from core.api.exceptions import BadRequestError, ConflictError, NotFoundError
+from core.api.exceptions import BadRequestError, ConflictError, NotFoundError, PermissionDeniedError
 from modules.elm.domain.constants import (
     ApplicationStatus,
     TaskType,
@@ -91,6 +91,9 @@ def review_cancellation_unit_head(
     app = get_application_by_id(application_id)
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
+
+    if app.unit_head_user_id and app.unit_head_user_id != reviewer_user_id:
+        raise PermissionDeniedError("Only the assigned Unit Head may review this cancellation.")
 
     current_status = ApplicationStatus(app.status)
     requires_estt = bool(app.establishment_user_id)
@@ -178,6 +181,9 @@ def review_cancellation_establishment(
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
+    if app.establishment_user_id and app.establishment_user_id != establishment_user_id:
+        raise PermissionDeniedError("Only the assigned Establishment reviewer may forward this cancellation.")
+
     current_status = ApplicationStatus(app.status)
     try:
         new_status = transition_cancellation_establishment(current_status)
@@ -226,6 +232,9 @@ def review_cancellation_final(
     app = get_application_by_id(application_id)
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
+
+    if app.sanctioning_authority_user_id and app.sanctioning_authority_user_id != sanctioner_user_id:
+        raise PermissionDeniedError("Only the assigned Sanctioning Authority may review this cancellation.")
 
     current_status = ApplicationStatus(app.status)
     try:

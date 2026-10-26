@@ -60,6 +60,7 @@ def execute_year_end_processing(
 
             # We treat faculty VL conversion specifically
             inp = YearEndAccountInput(
+                user_id=acc.user_id,
                 category=cat,
                 balance=bal,
                 is_faculty=(cat == LeaveCategory.VL.value),

@@ -22,6 +22,9 @@ class LeaveBalanceDTO:
     year: int
     category: str
     balance: Decimal
+    credited: Decimal = Decimal("0.00")
+    carried_forward: Decimal = Decimal("0.00")
+    availed: Decimal = Decimal("0.00")
 
 
 @dataclass(frozen=True)
@@ -36,12 +39,16 @@ class ActiveLeaveDTO:
     is_station_leave: bool
     station_destination: str
 
+    @property
+    def id(self) -> int:
+        return self.application_id
+
 
 def get_leave_balances(
     user_ids: Sequence[int],
     year: int | None = None,
-) -> dict[int, dict[str, Decimal]]:
-    """Return leave balances keyed by user_id -> category -> balance."""
+) -> dict[int, tuple[LeaveBalanceDTO, ...]]:
+    """Return leave balances keyed by user_id -> tuple of LeaveBalanceDTO."""
     uids = {int(u) for u in user_ids if u is not None}
     if not uids:
         return {}
@@ -49,16 +56,26 @@ def get_leave_balances(
     target_year = year or timezone.now().year
     accounts = LeaveAccount.objects.filter(user_id__in=uids, year=target_year)
 
-    res: dict[int, dict[str, Decimal]] = {u: {} for u in uids}
+    res: dict[int, list[LeaveBalanceDTO]] = {u: [] for u in uids}
     for acc in accounts:
-        res[acc.user_id][acc.category] = acc.balance
-    return res
+        res[acc.user_id].append(
+            LeaveBalanceDTO(
+                user_id=acc.user_id,
+                year=acc.year,
+                category=acc.category,
+                balance=acc.balance,
+                credited=acc.credited,
+                carried_forward=acc.carried_forward,
+                availed=acc.availed,
+            )
+        )
+    return {u: tuple(balances) for u, balances in res.items()}
 
 
 def get_active_leaves(
     user_ids: Sequence[int],
     on_date: date | None = None,
-) -> dict[int, list[ActiveLeaveDTO]]:
+) -> dict[int, tuple[ActiveLeaveDTO, ...]]:
     """Return approved leaves active on a given date for the specified users."""
     uids = {int(u) for u in user_ids if u is not None}
     if not uids:
@@ -87,7 +104,7 @@ def get_active_leaves(
                 station_destination=a.station_destination,
             )
         )
-    return res
+    return {u: tuple(leaves) for u, leaves in res.items()}
 
 
 def get_leave_applications(

@@ -18,7 +18,7 @@ Enforces:
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from modules.elm.domain.constants import (
     ApplicationStatus,
@@ -31,6 +31,7 @@ from modules.elm.domain.constants import (
 
 # Active pending states eligible for immediate withdrawal (BR-EL-022)
 PENDING_APPLICATION_STATES = frozenset({
+    ApplicationStatus.DRAFT,
     ApplicationStatus.AWAITING_SUBSTITUTE,
     ApplicationStatus.APPLICANT_ACTION_REQUIRED,
     ApplicationStatus.AWAITING_UNIT_HEAD,
@@ -181,21 +182,28 @@ def transition_withdrawal(
 def transition_cancellation_request(
     current_status: ApplicationStatus,
     start_date: date,
-    current_date: date,
+    current_date: date | None = None,
+    *,
+    today: date | None = None,
 ) -> ApplicationStatus:
     """CW-EL-02 / EL-UC-008: Request pre-start cancellation of approved leave.
 
     BR-EL-023 / CFR-EL-019: Approved leave may be cancelled only before its start date.
     """
+    effective_date = today or current_date
+    if effective_date is None:
+        raise ValueError("current_date or today must be provided.")
+
     if current_status != ApplicationStatus.APPROVED:
         raise ValueError(
             f"Cancellation can only be requested for APPROVED leave. "
             f"Current state is '{current_status.value}'."
         )
-    if current_date >= start_date:
+    if effective_date >= start_date:
         raise ValueError(
             f"Cannot cancel leave on or after start date ({start_date}). "
-            f"Current date is {current_date}. Use extension or resumption instead."
+            f"Cancellation is only permitted before start date. "
+            f"Current date is {effective_date}. Use extension or resumption instead."
         )
     return ApplicationStatus.CANCELLATION_PENDING_UNIT_HEAD
 
@@ -313,7 +321,7 @@ def determine_resumption_outcome(
     - Early (actual < approved end date): Balance credited/restored for unused days.
     - Late (actual > approved end date): Balance debited for extra days.
     """
-    if actual_resumption_date == approved_end_date:
+    if actual_resumption_date in (approved_end_date, approved_end_date + timedelta(days=1)):
         return "normal", ResumptionStatus.REVIEWED_NO_ADJUSTMENT
     if actual_resumption_date < approved_end_date:
         return "early", ResumptionStatus.REVIEWED_EARLY_ADJUSTED

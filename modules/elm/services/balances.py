@@ -126,7 +126,10 @@ def credit_leave_balance(
             f"No leave account found for user {user_id}, category {category}, year {year}."
         )
 
-    if transaction_type == TransactionType.RESTORE_CANCELLATION.value:
+    if transaction_type in (
+        TransactionType.RESTORE_CANCELLATION.value,
+        TransactionType.ADJUST_RESUMPTION_CREDIT.value,
+    ):
         acc.availed = max(Decimal("0.00"), acc.availed - amount)
     acc.balance += amount
     acc.save(update_fields=["availed", "balance", "updated_at"])

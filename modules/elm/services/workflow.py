@@ -7,7 +7,7 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from core.api.exceptions import ConflictError, NotFoundError
+from core.api.exceptions import ConflictError, NotFoundError, PermissionDeniedError
 from modules.elm.domain.constants import (
     ApplicationStatus,
     SanctionDecision,
@@ -34,6 +34,9 @@ def review_unit_head(
     app = get_application_by_id(application_id)
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
+
+    if app.unit_head_user_id and app.unit_head_user_id != reviewer_user_id:
+        raise PermissionDeniedError("Only the assigned Unit Head may review this application.")
 
     current_status = ApplicationStatus(app.status)
     requires_estt = bool(app.establishment_user_id)
@@ -129,6 +132,9 @@ def route_establishment(
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
 
+    if app.establishment_user_id and app.establishment_user_id != establishment_user_id:
+        raise PermissionDeniedError("Only the assigned Establishment reviewer may forward this application.")
+
     current_status = ApplicationStatus(app.status)
     try:
         new_status = transition_establishment_routing(current_status)
@@ -187,6 +193,9 @@ def sanction_decision(
     app = get_application_by_id(application_id)
     if not app:
         raise NotFoundError(f"Leave application #{application_id} not found.")
+
+    if app.sanctioning_authority_user_id and app.sanctioning_authority_user_id != sanctioner_user_id:
+        raise PermissionDeniedError("Only the assigned Sanctioning Authority may make this decision.")
 
     current_status = ApplicationStatus(app.status)
     try:

@@ -637,7 +637,9 @@ class AdminPolicyConfigView(APIView):
     )
     def put(self, request):
         p = request.principal
-        cfg = admin_service.update_policy_config(p.user_id, **request.data)
+        serializer = s.LeavePolicyConfigSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        cfg = admin_service.update_policy_config(p.user_id, **serializer.validated_data)
         return Response(s.LeavePolicyConfigSerializer(cfg).data)
 
 

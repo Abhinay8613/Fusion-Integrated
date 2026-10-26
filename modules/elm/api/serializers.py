@@ -100,7 +100,7 @@ class SubstituteReplaceSerializer(serializers.Serializer):
 
 class UnitHeadReviewSerializer(serializers.Serializer):
     # outcome: "approve" | "reject" for CL/RH; "recommended" | "not_recommended" for higher
-    outcome = serializers.CharField()
+    outcome = serializers.ChoiceField(choices=["approve", "reject", "recommended", "not_recommended"])
     remarks = serializers.CharField(required=False, allow_blank=True, default="")
 
 
@@ -122,19 +122,19 @@ class CancellationRequestSerializer(serializers.Serializer):
 
 
 class CancellationReviewSerializer(serializers.Serializer):
-    outcome = serializers.CharField()  # approve/reject or recommended/not_recommended
+    outcome = serializers.ChoiceField(choices=["approve", "reject", "recommended", "not_recommended"])
     remarks = serializers.CharField(required=False, allow_blank=True, default="")
 
 
 class ExtensionRequestSerializer(serializers.Serializer):
     extended_end_date = serializers.DateField()
-    reason = serializers.CharField(max_length=2000)
+    reason = serializers.CharField(max_length=1000)
     requires_substitute = serializers.BooleanField(default=False)
     substitute_user_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class ExtensionReviewSerializer(serializers.Serializer):
-    outcome = serializers.CharField()  # recommended / not_recommended or approve / reject
+    outcome = serializers.ChoiceField(choices=["approve", "reject", "recommended", "not_recommended"])
     remarks = serializers.CharField(required=False, allow_blank=True, default="")
 
 
